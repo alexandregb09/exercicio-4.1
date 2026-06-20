@@ -3,11 +3,12 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-tarefas = []
-proximo_id = 1
+# Store em memória. Zera quando o processo reinicia.
+_tarefas: dict[int, dict] = {}
+_proximo_id = 1
 
 
-class TarefaCreate(BaseModel):
+class TarefaIn(BaseModel):
     titulo: str
 
 
@@ -22,41 +23,39 @@ def health():
 
 
 @app.post("/tarefas", status_code=201)
-def criar_tarefa(tarefa: TarefaCreate):
-    global proximo_id
-
-    nova_tarefa = {
-        "id": proximo_id,
-        "titulo": tarefa.titulo,
-        "concluida": False
-    }
-
-    tarefas.append(nova_tarefa)
-    proximo_id += 1
-
-    return nova_tarefa
+def criar(tarefa: TarefaIn):
+    global _proximo_id
+    nova = {"id": _proximo_id, "titulo": tarefa.titulo, "concluida": False}
+    _tarefas[_proximo_id] = nova
+    _proximo_id += 1
+    return nova
 
 
-@app.get("/tarefas/{id}")
-def buscar_tarefa(id: int):
-    for tarefa in tarefas:
-        if tarefa["id"] == id:
-            return tarefa
-
-    raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+# --- Implementações do Exercício ---
 
 
 @app.get("/tarefas")
-def listar_tarefas():
-    return tarefas
+def listar_todas():
+    # Retorna uma lista com todas as tarefas armazenadas no dicionário
+    return list(_tarefas.values())
 
 
-@app.put("/tarefas/{id}")
-def atualizar_tarefa(id: int, dados: TarefaUpdate):
-    for tarefa in tarefas:
-        if tarefa["id"] == id:
-            tarefa["titulo"] = dados.titulo
-            tarefa["concluida"] = dados.concluida
-            return tarefa
+@app.get("/tarefas/{tarefa_id}")
+def obter_por_id(tarefa_id: int):
+    # Verifica se a tarefa existe no dicionário
+    if tarefa_id not in _tarefas:
+        raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+    return _tarefas[tarefa_id]
 
-    raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+
+@app.put("/tarefas/{tarefa_id}")
+def atualizar(tarefa_id: int, tarefa_atualizada: TarefaUpdate):
+    # Verifica se a tarefa existe antes de tentar atualizar
+    if tarefa_id not in _tarefas:
+        raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+
+    # Atualiza os campos mantendo o mesmo ID
+    _tarefas[tarefa_id]["titulo"] = tarefa_atualizada.titulo
+    _tarefas[tarefa_id]["concluida"] = tarefa_atualizada.concluida
+
+    return _tarefas[tarefa_id]
