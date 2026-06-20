@@ -46,9 +46,17 @@ autograde validar 4.1
 
 ## Decisões de implementação
 
-Decisões de ImplementaçãoEscolha do FrameworkOptou-se pelo FastAPI devido à sua alta performance, tipagem estática nativa baseada em Type Hints do Python e validação de dados automática em tempo de execução via Pydantic. Essas características mitigam erros comuns de tipagem (como o recebimento de valores booleanos disfarçados de strings de texto) e aceleram o cumprimento exato do contrato técnico determinado pelo exercício.Modelagem do Repositório de Dados (Data Store)O armazenamento das tarefas foi estruturado utilizando um dicionário nativo do Python (dict\[int, dict]) associado a uma variável global de controle de índice incremental (\_proximo\_id = 1). Essa abordagem cumpre perfeitamente o requisito de volatilidade (zerar o estado ao reiniciar a aplicação) e garante uma complexidade de busca de tempo constante $O(1)$ ao recuperar ou atualizar registros por meio de sua chave primária (id).Tratamento de Erros e Casos de Borda (404)Para os endpoints de consulta individual (GET /tarefas/{id}) e modificação (PUT /tarefas/{id}), o sistema realiza uma verificação prévia de associação de chave dentro do dicionário global. Caso o identificador fornecido pelo cliente não seja encontrado no mapa de dados, a API interrompe o fluxo imediatamente disparando uma exceção do tipo HTTPException(status\_code=404, detail="Tarefa não encontrada"). Isso garante que o código de status HTTP correto (404) seja despachado para o cliente, respeitando as convenções da arquitetura REST."""with open("README.md", "w", encoding="utf-8") as f:f.write(readme\_content)print("README.md gerado com sucesso!")
+### Escolha do Framework
 
-```text?code\_stdout\&code\_event\_index=1
+Optou-se pelo **FastAPI** devido à sua alta performance, tipagem estática nativa baseada em Type Hints do Python e validação de dados automática em tempo de execução via Pydantic. Essas características mitigam erros comuns de tipagem e aceleram o cumprimento exato do contrato técnico determinado pelo exercício.
+
+### Modelagem do Store
+
+O armazenamento das tarefas foi estruturado utilizando um dicionário nativo do Python (`dict[int, dict]`) associado a uma variável global de controle de índice incremental (`_proximo_id = 1`). Essa abordagem cumpre o requisito de volatilidade (zerar o estado ao reiniciar a aplicação) e garante busca em tempo constante O(1) por ID.
+
+### Tratamento de 404
+
+Para os endpoints `GET /tarefas/{id}` e `PUT /tarefas/{id}`, o sistema verifica previamente se a chave existe no dicionário. Caso o ID não seja encontrado, dispara `HTTPException(status_code=404, detail="Tarefa não encontrada")`, respeitando as convenções REST.
 
 
 
