@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha TODO List</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input[type="text"] { flex: 1; padding: 8px; }
+        button { padding: 8px 12px; cursor: pointer; }
+        ul { list-style: none; padding: 0; }
+        li { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
+        .concluida { text-decoration: line-through; color: #888; }
+    </style>
+</head>
+<body>
+
+    <h2>Tarefas API Local</h2>
+    
+    <div class="input-group">
+        <input type="text" id="novoTitulo" placeholder="Nova tarefa...">
+        <button onclick="criarTarefa()">Adicionar</button>
+    </div>
+
+    <ul id="listaTarefas"></ul>
+
+    <script>
+        const API_URL = 'http://localhost:8000/tarefas';
+
+        async function listarTarefas() {
+            const res = await fetch(API_URL);
+            const tarefas = await res.json();
+            const lista = document.getElementById('listaTarefas');
+            lista.innerHTML = '';
+            
+            tarefas.forEach(t => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="${t.concluida ? 'concluida' : ''}">${t.titulo}</span>
+                    <button onclick="alternarTarefa(${t.id}, '${t.titulo}', ${t.concluida})">
+                        ${t.concluida ? 'Desmarcar' : 'Concluir'}
+                    </button>
+                `;
+                lista.appendChild(li);
+            });
+        }
+
+        async function criarTarefa() {
+            const input = document.getElementById('novoTitulo');
+            if (!input.value) return;
+
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ titulo: input.value })
+            });
+
+            input.value = '';
+            listarTarefas();
+        }
+
+        async function alternarTarefa(id, titulo, concluida) {
+            await fetch(`${API_URL}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ titulo: titulo, concluida: !concluida })
+            });
+            listarTarefas();
+        }
+
+        // Carrega as tarefas ao abrir a página
+        listarTarefas();
+    </script>
+</body>
+</html>
